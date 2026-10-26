@@ -104,6 +104,15 @@ test("failing when set is bigger than max() ", () => {
   }
 });
 
+test("an upper size bound fails before any element is parsed", () => {
+  const issues = z
+    .set(z.string())
+    .max(1)
+    .safeParse(new Set([1, 2])).error!.issues;
+  expect(issues.length).toEqual(1);
+  expect(issues[0].code).toEqual(ZodIssueCode.too_big);
+});
+
 test("doesn’t throw when an empty set is given", () => {
   const result = stringSet.safeParse(new Set([]));
   expect(result.success).toEqual(true);

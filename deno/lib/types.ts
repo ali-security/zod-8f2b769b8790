@@ -2198,6 +2198,8 @@ export class ZodArray<
           exact: true,
           message: def.exactLength.message,
         });
+        // an oversized array fails before any element is parsed
+        if (tooBig) return INVALID;
         status.dirty();
       }
     }
@@ -2226,7 +2228,8 @@ export class ZodArray<
           exact: false,
           message: def.maxLength.message,
         });
-        status.dirty();
+        // an oversized array fails before any element is parsed
+        return INVALID;
       }
     }
 
@@ -3782,7 +3785,8 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
           exact: false,
           message: def.maxSize.message,
         });
-        status.dirty();
+        // an oversized set fails before any element is parsed
+        return INVALID;
       }
     }
 

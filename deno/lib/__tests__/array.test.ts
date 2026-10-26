@@ -65,6 +65,39 @@ test("continue parsing despite array size error", () => {
   }
 });
 
+test("an upper size bound fails before any element is parsed", () => {
+  let parsed = 0;
+  const el = z.string().refine(() => ++parsed);
+  let refined = 0;
+  const schema = z
+    .array(el)
+    .max(2, "too many")
+    .refine(() => ++refined);
+  const summarize = (result: z.SafeParseReturnType<any, any>) =>
+    result.error!.issues.map(({ code, path, message }) => ({
+      code,
+      path,
+      message,
+    }));
+  expect(summarize(schema.safeParse(["a", "b", "c"]))).toEqual([
+    { code: "too_big", path: [], message: "too many" },
+  ]);
+  const exact = z.array(el).length(2).safeParse(["a", "b", "c"]).error!.issues;
+  expect(exact.length).toEqual(1);
+  expect(exact[0].code).toEqual("too_big");
+  expect((exact[0] as z.ZodTooBigIssue).exact).toEqual(true);
+  expect(
+    summarize(z.object({ a: z.array(el).max(1) }).safeParse({ a: ["a", "b"] }))
+  ).toEqual([
+    {
+      code: "too_big",
+      path: ["a"],
+      message: "Array must contain at most 1 element(s)",
+    },
+  ]);
+  expect([parsed, refined]).toEqual([0, 0]);
+});
+
 test("parse should fail given sparse array", () => {
   const schema = z.array(z.string()).nonempty().min(1).max(3);
 
